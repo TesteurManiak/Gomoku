@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BA0E4EAE-3043-4F16-A901-A62B2A2E64FC}</ProjectGuid>
+    <ProjectGuid>{404EED90-AE8D-49CD-B784-0FA14E9385E5}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>pbrain_Gromoku</RootNamespace>
     <AssemblyName>pbrain-Gromoku</AssemblyName>
