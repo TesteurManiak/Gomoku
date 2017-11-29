@@ -11,10 +11,10 @@ namespace pbrain_Gromoku
     {
         /* information about a game - you should use these variables */
         public int width, height; /* the board size */
-        public int info_timeout_turn = 30000; /* time for one turn in milliseconds */
+        public int info_timeout_turn = 5000; /* time for one turn in milliseconds */
         public int info_timeout_match = 1000000000; /* total time for a game */
         public int info_time_left = 1000000000; /* left time for a game */
-        public int info_max_memory = 0; /* maximum memory in bytes, zero if unlimited */
+        public int info_max_memory = 70000000; /* maximum memory in bytes, zero if unlimited */
         public int info_game_type = 1; /* 0:human opponent, 1:AI opponent, 2:tournament, 3:network tournament */
         public bool info_exact5 = false; /* false:five or more stones win, true:exactly five stones win */
         public bool info_renju = false; /* false:gomoku, true:renju */
@@ -118,7 +118,7 @@ namespace pbrain_Gromoku
             stop();
             if (width == 0)
             {
-                width = height = 20;
+                width = height = 19;
                 brain_init();
             }
         }
