@@ -24,16 +24,66 @@ namespace pbrain_Gromoku
         public string dataFolder; /* folder for persistent files, can be null */
 
         abstract public string  brain_about { get; }
-        abstract public void brain_init();
+        abstract public void brain_init(); /* create the board and call Console.WriteLine("OK"); or Console.WriteLine("ERROR Maximal board size is .."); */
         abstract public void brain_restart(); /* delete old board, create new board, call Console.WriteLine("OK"); */
         abstract public void brain_turn(); /* choose your move and call do_mymove(x,y); 0<=x<width, 0<=y<height */
         abstract public void brain_my(int x, int y); /* put your move to the board */
+        abstract public void brain_opponents(int x, int y); /* put opponent's move to the board */
+        abstract public void brain_block(int x, int y); /* square [x,y] belongs to a winning line (when info_continuous is 1) */
+        abstract public int brain_takeback(int x, int y); /* clear one square; return value: 0:success, 1:not supported, 2:error */
+        abstract public void brain_end();  /* delete temporary files, free resources */
+        virtual public void brain_eval(int x, int y) { } /* display evaluation of square [x,y] */
 
         private string cmd;
         private AutoResetEvent event1;
         private ManualResetEvent event2;
 
-        protected void do_mymove(int x, int y)
+        private void get_line() /* read a line from STDIN */
+        {
+            cmd = Console.ReadLine();
+            if (cmd == null) Environment.Exit(0);
+        }
+
+        private bool parse_coord2(string param, out int x, out int y) /* parse coordinates x,y */
+        {
+            string[] p = param.Split(',');
+            if (p.Length == 2 && int.TryParse(p[0], out x) && int.TryParse(p[1], out y) && x >= 0 && y >= 0)
+                return true;
+            x = y = 0;
+            return false;
+        }
+
+        private bool parse_coord(string param, out int x, out int y) /* parse coordinates x,y */
+        {
+            return parse_coord2(param, out x, out y) && x < width && y < height;
+        }
+
+        private void parse_3int_chk(string param, out int x, out int y, out int z) /* parse coordinates x,y and player number z */
+        {
+            string[] p = param.Split(',');
+            if (!(p.Length == 3 && int.TryParse(p[0], out x) && int.TryParse(p[1], out y) && int.TryParse(p[2], out z)
+                && x >= 0 && y >= 0 && x < width && y < height))
+                x = y = z = 0;
+        }
+
+        private static string get_cmd_param(string command, out string param) /* return pointer to word after command if input starts with command, otherwise return NULL */
+        {
+            param = "";
+            int pos = command.IndexOf(' ');
+            if (pos >= 0)
+            {
+                param = command.Substring(pos + 1).TrimStart(' ');
+                command = command.Substring(0, pos);
+            }
+            return command.ToLower();
+        }
+
+        protected void suggest(int x, int y) /* send suggest */
+        {
+            Console.WriteLine("SUGGEST {0},{1}", x, y);
+        }
+
+        protected void do_mymove(int x, int y) /* write move to the pipe and update internal data structures */
         {
             brain_my(x, y);
             Console.WriteLine("{0},{1}", x, y);
@@ -49,17 +99,185 @@ namespace pbrain_Gromoku
             }
         }
 
+        private void turn() /* start thinking */
+        {
+            terminate = 0;
+            event2.Reset();
+            event1.Set();
+        }
+
+        private void stop() /* stop thinking */
+        {
+            terminate = 1;
+            event2.WaitOne();
+        }
+
+        private void start()
+        {
+            start_time = Environment.TickCount;
+            stop();
+            if (width == 0)
+            {
+                width = height = 20;
+                brain_init();
+            }
+        }
+
+        private void do_command() /* do command cmd */
+        {
+            string param, info;
+            int x, y, who, e;
+
+            switch (get_cmd_param(cmd, out param))
+            {
+                case "info":
+                    switch (get_cmd_param(param, out info))
+                    {
+                        case "max_memory":
+                            int.TryParse(info, out info_max_memory); break;
+                        case "timeout_match":
+                            int.TryParse(info, out info_timeout_match); break;
+                        case "timeout_turn":
+                            int.TryParse(info, out info_timeout_turn); break;
+                        case "time_left":
+                            int.TryParse(info, out info_time_left); break;
+                        case "game_type":
+                            int.TryParse(info, out info_game_type); break;
+                        case "rule":
+                            if (int.TryParse(info, out e))
+                            {
+                                info_exact5 = (e & 1) != 0;
+                                info_continuous = (e & 2) != 0;
+                                info_renju = (e & 4) != 0;
+                            }
+                            break;
+                        case "folder":
+                            dataFolder = info; break;
+                        case "evaluate":
+                            if (parse_coord(info, out x, out y)) brain_eval(x, y);
+                            break;
+                            /* unknown info is ignored */
+                    }
+                    break;
+                case "start":
+                    if (!int.TryParse(param, out width) || width < 5)
+                    {
+                        width = 0;
+                        Console.WriteLine("ERROR bad START parameter");
+                    }
+                    else
+                    {
+                        height = width;
+                        start();
+                        brain_init();
+                    }
+                    break;
+                case "rectstart":
+                    if (!parse_coord2(param, out width, out height) || width < 5 || height < 5)
+                    {
+                        width = height = 0;
+                        Console.WriteLine("ERROR bad RECTSTART parameters");
+                    }
+                    else
+                    {
+                        start();
+                        brain_init();
+                    }
+                    break;
+                case "restart":
+                    start();
+                    brain_restart();
+                    break;
+                case "turn":
+                    start();
+                    if (!parse_coord(param, out x, out y))
+                    {
+                        Console.WriteLine("ERROR bad coordinates");
+                    }
+                    else
+                    {
+                        brain_opponents(x, y);
+                        turn();
+                    }
+                    break;
+                case "play":
+                    start();
+                    if (!parse_coord(param, out x, out y))
+                    {
+                        Console.WriteLine("ERROR bad coordinates");
+                    }
+                    else
+                    {
+                        do_mymove(x, y);
+                    }
+                    break;
+                case "begin":
+                    start();
+                    turn();
+                    break;
+                case "about":
+                    Console.WriteLine(brain_about);
+                    break;
+                case "end":
+                    stop();
+                    brain_end();
+                    Environment.Exit(0);
+                    break;
+                case "board":
+                    start();
+                    for (; ; ) /* fill the whole board */
+                    {
+                        get_line();
+                        parse_3int_chk(cmd, out x, out y, out who);
+                        if (who == 1) brain_my(x, y);
+                        else if (who == 2) brain_opponents(x, y);
+                        else if (who == 3) brain_block(x, y);
+                        else
+                        {
+                            if (!cmd.Equals("done", StringComparison.InvariantCultureIgnoreCase))
+                                Console.WriteLine("ERROR x,y,who or DONE expected after BOARD");
+                            break;
+                        }
+                    }
+                    turn();
+                    break;
+                case "takeback":
+                    start();
+                    string t = "ERROR bad coordinates";
+                    if (parse_coord(param, out x, out y))
+                    {
+                        e = brain_takeback(x, y);
+                        if (e == 0) t = "OK";
+                        else if (e == 1) t = "UNKNOWN";
+                    }
+                    Console.WriteLine(t);
+                    break;
+                default:
+                    Console.WriteLine("UNKNOWN command");
+                    break;
+            }
+        }
+
         public void main()
         {
             try
             {
                 int dummy = Console.WindowHeight;
+                //ERROR, process started from the Explorer or command line
                 Console.WriteLine("MESSAGE Gomoku AI should not be started directly. Please install gomoku manager (http://sourceforge.net/projects/piskvork). Then enter path to this exe file in players settings.");
             }
             catch (System.IO.IOException)
-            {}
+            {
+                //OK, process started from the Piskvork manager
+            }
             event1 = new AutoResetEvent(false);
             new Thread(threadLoop).Start();
+            event2 = new ManualResetEvent(true);
+            for (; ; )
+            {
+                get_line();
+                do_command();
+            }
         }
     }
     class GomocupEngine : GomocupInterface
@@ -117,6 +335,40 @@ namespace pbrain_Gromoku
             }
         }
 
+        public override void brain_opponents(int x, int y)
+        {
+            if (isFree(x, y))
+            {
+                board[x, y] = 2;
+            }
+            else
+            {
+                Console.WriteLine("ERROR opponents's move [{0},{1}]", x, y);
+            }
+        }
+
+        public override void brain_block(int x, int y)
+        {
+            if (isFree(x, y))
+            {
+                board[x, y] = 3;
+            }
+            else
+            {
+                Console.WriteLine("ERROR winning move [{0},{1}]", x, y);
+            }
+        }
+
+        public override int brain_takeback(int x, int y)
+        {
+            if (x >= 0 && y >= 0 && x < width && y < height && board[x, y] != 0)
+            {
+                board[x, y] = 0;
+                return 0;
+            }
+            return 2;
+        }
+
         public override void brain_turn()
         {
             int x, y, i;
@@ -132,6 +384,14 @@ namespace pbrain_Gromoku
 
             if (i > 1) Console.WriteLine("DEBUG {0} coordinates didn't hit an empty field", i);
             do_mymove(x, y);
+        }
+
+        public override void brain_end()
+        {
+        }
+
+        public override void brain_eval(int x, int y)
+        {
         }
     }
     class Program
