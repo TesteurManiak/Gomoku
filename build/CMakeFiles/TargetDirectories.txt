@@ -1,0 +1,3 @@
+C:/Users/53838/source/repos/Gomoku_withcmake/build/CMakeFiles/pbrain-Gromoku.dir
+C:/Users/53838/source/repos/Gomoku_withcmake/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/53838/source/repos/Gomoku_withcmake/build/CMakeFiles/ZERO_CHECK.dir

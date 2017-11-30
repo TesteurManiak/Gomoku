@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\53838\source\repos\Gomoku_withcmake\build\CMakeFiles\b1614d4d6022c0a35feeb6c9151aa839\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{CB0DDEB8-E4F1-383F-B802-1ED64D741A9F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
