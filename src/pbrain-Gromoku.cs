@@ -280,6 +280,19 @@ namespace pbrain_Gromoku
             }
         }
     }
+
+    class Coordinate
+    {
+        public int _x;
+        public int _y;
+
+        public Coordinate(int x, int y)
+        {
+            _x = x;
+            _y = y;
+        }
+    }
+
     class GomocupEngine : GomocupInterface
     {
         const int MAX_BOARD = 100;
@@ -290,7 +303,7 @@ namespace pbrain_Gromoku
         {
             get
             {
-                return "name=\"Random\", author=\"Petr Lastovicka\", version=\"1.1\", country=\"Czech Republic\", www=\"http://petr.lastovicka.sweb.cz\"";
+                return "name=\"Gromoku\", author=\"Guillaume et Baptiste\", version=\"0.1\", country=\"France\"";
             }
         }
 
@@ -367,6 +380,29 @@ namespace pbrain_Gromoku
                 return 0;
             }
             return 2;
+        }
+
+        public int get_space(int x, int y)
+        {
+            if (isFree(x + 1, y) || isFree(x, y + 1) || isFree(x + 1, y + 1) ||
+                isFree(x - 1, y) || isFree(x, y - 1) || isFree(x - 1, y - 1))
+                return 1;
+            return 0;
+        }
+
+        public void place_to_play()
+        {
+            List<Coordinate> play_list = new List<Coordinate>();
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    if (get_space(x, y) > 0)
+                        play_list.Add(new Coordinate(x, y));
+                }
+            }
+            play_list.Clear();
         }
 
         public override void brain_turn()
