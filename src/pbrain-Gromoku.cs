@@ -383,12 +383,10 @@ namespace pbrain_Gromoku
             return 2;
         }
 
-        public int get_space(int x, int y)
+        void add_pos(int x, int y)
         {
-            if (isFree(x + 1, y) || isFree(x, y + 1) || isFree(x + 1, y + 1) ||
-                isFree(x - 1, y) || isFree(x, y - 1) || isFree(x - 1, y - 1))
-                return 1;
-            return 0;
+            if (isFree(x, y))
+                play_list.Add(new Coordinate(x, y));
         }
 
         public void place_to_play()
@@ -401,13 +399,15 @@ namespace pbrain_Gromoku
                     {
                         if (x > 0 && y > 0)
                         {
-                            play_list.Add(new Coordinate(x - 1, y));
-                            play_list.Add(new Coordinate(x, y - 1));
-                            play_list.Add(new Coordinate(x - 1, y - 1));
+                            add_pos(x - 1, y);
+                            add_pos(x - 1, y + 1);
+                            add_pos(x, y - 1);
+                            add_pos(x + 1, y - 1);
+                            add_pos(x - 1, y - 1);
                         }
-                        play_list.Add(new Coordinate(x + 1, y));
-                        play_list.Add(new Coordinate(x, y + 1));
-                        play_list.Add(new Coordinate(x + 1, y + 1));
+                        add_pos(x + 1, y);
+                        add_pos(x, y + 1);
+                        add_pos(x + 1, y + 1);
                     }
                 }
             }
