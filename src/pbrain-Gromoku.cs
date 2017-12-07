@@ -298,7 +298,7 @@ namespace pbrain_Gromoku
         const int MAX_BOARD = 100;
         int[,] board = new int[MAX_BOARD, MAX_BOARD];
         Random rand = new Random();
-        Coordinate last_play;
+        List<Coordinate> play_list = new List<Coordinate>();
 
         public override string brain_about
         {
@@ -342,7 +342,6 @@ namespace pbrain_Gromoku
             if (isFree(x, y))
             {
                 board[x, y] = 1;
-                last_play = new Coordinate(x, y);
             }
             else
             {
@@ -355,7 +354,6 @@ namespace pbrain_Gromoku
             if (isFree(x, y))
             {
                 board[x, y] = 2;
-                last_play = new Coordinate(x, y);
             }
             else
             {
@@ -395,17 +393,24 @@ namespace pbrain_Gromoku
 
         public void place_to_play()
         {
-            List<Coordinate> play_list = new List<Coordinate>();
-
             for (int y = 0; y < height; y++)
             {
                 for (int x = 0; x < width; x++)
                 {
-                    if (get_space(x, y) > 0)
-                        play_list.Add(new Coordinate(x, y));
+                    if (!isFree(x, y))
+                    {
+                        if (x > 0 && y > 0)
+                        {
+                            play_list.Add(new Coordinate(x - 1, y));
+                            play_list.Add(new Coordinate(x, y - 1));
+                            play_list.Add(new Coordinate(x - 1, y - 1));
+                        }
+                        play_list.Add(new Coordinate(x + 1, y));
+                        play_list.Add(new Coordinate(x, y + 1));
+                        play_list.Add(new Coordinate(x + 1, y + 1));
+                    }
                 }
             }
-            play_list.Clear();
         }
 
         public override void brain_turn()
@@ -415,8 +420,18 @@ namespace pbrain_Gromoku
             i = -1;
             do
             {
-                x = rand.Next(width);
-                y = rand.Next(height);
+                place_to_play();
+                if (play_list.Count() == 0)
+                {
+                    x = rand.Next(width);
+                    y = rand.Next(height);
+                }
+                else
+                {
+                    x = play_list[0]._x;
+                    y = play_list[0]._y;
+                }
+                play_list.Clear();
                 i++;
                 if (terminate != 0) return;
             } while (!isFree(x, y));
