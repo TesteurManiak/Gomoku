@@ -298,6 +298,7 @@ namespace pbrain_Gromoku
         const int MAX_BOARD = 100;
         int[,] board = new int[MAX_BOARD, MAX_BOARD];
         Random rand = new Random();
+        Coordinate last_play;
 
         public override string brain_about
         {
@@ -341,6 +342,7 @@ namespace pbrain_Gromoku
             if (isFree(x, y))
             {
                 board[x, y] = 1;
+                last_play = new Coordinate(x, y);
             }
             else
             {
@@ -353,6 +355,7 @@ namespace pbrain_Gromoku
             if (isFree(x, y))
             {
                 board[x, y] = 2;
+                last_play = new Coordinate(x, y);
             }
             else
             {
