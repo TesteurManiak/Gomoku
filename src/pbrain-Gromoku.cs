@@ -418,9 +418,9 @@ namespace pbrain_Gromoku
             int x, y, i;
 
             i = -1;
+            place_to_play();
             do
             {
-                place_to_play();
                 if (play_list.Count() == 0)
                 {
                     x = rand.Next(width);
@@ -430,14 +430,15 @@ namespace pbrain_Gromoku
                 {
                     x = play_list[0]._x;
                     y = play_list[0]._y;
+                    play_list.RemoveAt(0);
                 }
-                play_list.Clear();
                 i++;
                 if (terminate != 0) return;
             } while (!isFree(x, y));
 
             if (i > 1) Console.WriteLine("DEBUG {0} coordinates didn't hit an empty field", i);
             do_mymove(x, y);
+            play_list.Clear();
         }
 
         public override void brain_end()
